@@ -251,209 +251,47 @@ StratoSharkは、単なるツールではなく、**eBPFコミュニティへの
 「WinPcapでWiresharkをWindowsに持ち込んだように、StratoSharkでネットワーク解析をKubernetesに持ち込みたい」
 :::
 
-## StratoSharkが解決する具体的な問題
+## StratoSharkのコアコンセプト
 
-### 問題1: 「Podに入らないとキャプチャできない」
+StratoSharkは、クラウドネイティブ時代の3つの大きな課題を解決します：
 
-**従来の方法の課題**
+### 1. アクセスの課題
+従来：**Podに入る必要がある** → StratoShark：**ホストから直接キャプチャ**
 
-```bash
-# 1. Podにログイン
-kubectl exec -it my-app-xyz -- /bin/sh
+### 2. 可視性の課題
+従来：**暗号化された通信は見えない** → StratoShark：**アプリケーションレベルでキャプチャ**
 
-# 2. tcpdumpがない...
-$ tcpdump
-sh: tcpdump: not found
+### 3. パフォーマンスの課題
+従来：**全パケットをUser Spaceにコピー** → StratoShark：**eBPFで早期フィルタリング**
 
-# 3. イメージを変更するか、デバッグコンテナを追加する必要がある
-```
-
-多くの本番環境では：
-- Distroless イメージでツールが入っていない
-- セキュリティポリシーでPod変更が制限されている
-- デバッグツールのインストールが許可されていない
-
-**StratoSharkの解決策**
-
-```bash
-# ホストから直接キャプチャ（Podに入る必要なし）
-stratoshark capture \
-  --namespace production \
-  --pod my-app-xyz \
-  --output /tmp/capture.pcap
-```
-
-### 問題2: 「Service Meshで暗号化されて中身が見えない」
-
-**Istio/Linkerdの課題**
-
-Service Meshを導入すると、Pod間通信がmTLS（mutual TLS）で暗号化されます。
-
-```bash
-# tcpdumpでキャプチャしても...
-$ tcpdump -i eth0 -A
-# => 暗号化されたデータしか見えない
-16 03 03 00 4a 02 00 00 46 03 03 5f ...
-```
-
-**StratoSharkの解決策**
-
-eBPFを使えば、**アプリケーションレベル**（暗号化前/復号化後）でデータをキャプチャできます。
-
-```bash
-# SSL/TLSレイヤーの下でキャプチャ
-stratoshark capture --ssl-keylog --pod my-app-xyz
-```
-
-### 問題3: 「大量のトラフィックでオーバーヘッドが大きい」
-
-**従来のキャプチャの問題**
-
-```
-全パケット → User Space → フィルタ → 解析
-             ↑
-         ここでコピーが発生（遅い）
-```
-
-マイクロサービス環境では、数千のPodが通信しており、全パケットをUser Spaceにコピーするとオーバーヘッドが非常に大きくなります。
-
-**StratoSharkの効率性**
-
-```
-カーネル空間でフィルタ → 必要なパケットのみ → User Space
-                      ↑
-                  eBPFで早期フィルタリング
-```
-
-## 実際の利用シーン
-
-ここでは、StratoSharkが威力を発揮する具体的なシーンを紹介します。
-
-### シーン1: Kubernetes Podの通信デバッグ
-
-**状況**: 本番環境で特定のPodからのHTTPリクエストが失敗している
-
-**従来の調査方法**:
-```bash
-# 1. Podのログを確認
-kubectl logs my-app-xyz
-
-# 2. ログに詳細がない...
-
-# 3. tcpdumpを入れたいがdistrolessイメージで無理
-
-# 4. イメージを変更してデプロイし直す（本番で！）
-```
-
-**StratoSharkを使った調査**:
-```bash
-# ホストから直接キャプチャ（30秒で原因特定）
-stratoshark capture \
-  --pod my-app-xyz \
-  --namespace production \
-  --filter "http" \
-  --duration 60s
-
-# 結果: HTTPステータス500が大量に返っていることが判明
-# APIサーバー側の問題だった
-```
-
-### シーン2: DNS障害の原因調査
-
-**状況**: Podから外部サービスへの接続が間欠的に失敗する
-
-**調査のポイント**:
-- DNS解決に失敗しているのか？
-- DNSは成功しているが接続が失敗しているのか？
-- どのDNSサーバーに問い合わせているのか？
-
-**StratoSharkでの調査**:
-```bash
-# DNS通信だけをキャプチャ
-stratoshark capture \
-  --pod my-app-xyz \
-  --filter "port 53" \
-  --duration 300s
-
-# 解析結果の例:
-# - CoreDNSへの問い合わせ: 成功
-# - しかしレスポンスに5秒かかっている
-# => CoreDNSのキャッシュミスとアップストリームDNSの遅延が原因
-```
-
-### シーン3: パフォーマンス問題の特定
-
-**状況**: APIのレスポンスが遅い（平均500ms）
-
-**調査したいこと**:
-- ネットワーク遅延？
-- アプリケーション処理遅延？
-- データベースクエリ遅延？
-
-**StratoSharkでの調査**:
-```bash
-# TCP handshake と HTTP リクエスト/レスポンスの遅延を測定
-stratoshark capture \
-  --pod api-server-xyz \
-  --filter "tcp or http" \
-  --latency-analysis \
-  --duration 60s
-
-# 結果:
-# - TCP handshake: 5ms
-# - HTTPリクエスト送信からレスポンス受信まで: 495ms
-# => ネットワークではなく、アプリケーション側の処理が遅い
-```
-
-### シーン4: マイクロサービス間通信のトレース
-
-**状況**: マイクロサービスAからBへのリクエストが失敗する
-
-**複雑な経路**:
-```
-Pod A → Service A → Ingress → Service B → Pod B
-```
-
-**StratoSharkでの調査**:
-```bash
-# 複数のPodを同時にキャプチャ
-stratoshark capture \
-  --pod pod-a-xyz \
-  --pod pod-b-xyz \
-  --filter "tcp.port==8080" \
-  --correlate-flows
-
-# 結果:
-# - Pod Aからのリクエストは正常に送信されている
-# - Pod Bはリクエストを受信していない
-# => Service Bの設定（セレクタ）が間違っている
-```
+:::message
+**詳細は第2章で**
+具体的な技術的詳細、コマンド例、実践的なトラブルシューティング手法については、第2章「Wiresharkとの違い」で詳しく解説します。
+:::
 
 ## StratoSharkを使うべき人・組織
 
-### SREチーム
+StratoSharkは、以下のような役割を持つエンジニアに最適です：
 
-- **本番環境でのトラブルシューティング**が日常業務
-- Kubernetesクラスタの運用を担当
-- インシデント対応の迅速化が求められる
+### SREチーム
+- Kubernetesクラスタの運用
+- インシデント対応の迅速化
+- 本番環境でのトラブルシューティング
 
 ### プラットフォームエンジニア
-
 - Kubernetes基盤の設計・構築
-- ネットワークポリシーの設定
-- CNI（Container Network Interface）プラグインの選定と管理
+- ネットワークポリシーの管理
+- CNIプラグインの選定
 
 ### セキュリティチーム
-
 - ネットワークトラフィックの監視
-- 異常な通信パターンの検知
-- コンプライアンス要件への対応
+- 異常通信パターンの検知
+- コンプライアンス対応
 
 ### アプリケーション開発者
-
 - マイクロサービスのデバッグ
-- APIレスポンス時間の最適化
-- gRPC/HTTP/2などのモダンプロトコルの解析
+- APIパフォーマンス最適化
+- モダンプロトコル（gRPC、HTTP/2）の解析
 
 ## StratoSharkの技術スタック
 
