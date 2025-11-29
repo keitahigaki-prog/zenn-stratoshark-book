@@ -247,8 +247,37 @@ StratoSharkは、単なるツールではなく、**eBPFコミュニティへの
 - **オープンソース**: Wireshark同様、コミュニティ駆動の開発
 
 :::message
-**Loris Degioanni氏の言葉**（想定）
-「WinPcapでWiresharkをWindowsに持ち込んだように、StratoSharkでネットワーク解析をKubernetesに持ち込みたい」
+**Loris Degioanni氏のビジョンの一貫性**
+
+Loris Degioanni氏とGerald Combs氏は、**1998年のWireshark（当時Ethereal）開始以来、25年以上にわたって協働**してきました：
+
+```
+1998年: Ethereal（後のWireshark）- Gerald Combs創設
+2000年: WinPcap - Loris Degioanni開発（Wiresharkを Windows対応に）
+2006年: Ethereal → Wireshark改名（Gerald & Lorisで実施）
+2013年: Sysdig - Loris Degioanni創設
+2016年: Falco - Sysdig社がオープンソース化、Gerald参加
+2024年: Falco CNCF Graduated（セキュリティ系OSS初の快挙）
+2025年: StratoShark - Gerald & Lorisが再び協働
+```
+
+**一貫した哲学**:
+「低レイヤーの可視化こそが真実を明らかにする」
+
+- **Wireshark**: ネットワークパケット層の可視化
+- **Sysdig**: システムコール層の可視化
+- **Falco**: システムコールのセキュリティ検知
+- **StratoShark**: クラウドネイティブなネットワーク解析
+
+:::
+
+:::message alert
+**関連書籍のご紹介**
+
+Falcoについて詳しく学びたい方は、同じ著者による以下の本もご覧ください：
+- [**Falco実践シリーズ - Kubernetesランタイムセキュリティの実装ガイド**](https://zenn.dev/books/falco-practice-series)
+
+Falco本では、**システムコール監視によるランタイムセキュリティ**を詳しく解説しています。StratoShark本では、**ネットワークパケット解析**に焦点を当てており、両者を組み合わせることで包括的なKubernetesセキュリティ・可観測性を実現できます。
 :::
 
 ## StratoSharkのコアコンセプト

@@ -4,7 +4,7 @@
 
 ## 📖 本について
 
-Wiresharkの作者が開発した次世代のパケット/イベント解析ツールStratoSharkを学ぶ本です。eBPFを活用したクラウドネイティブ時代のネットワーク解析手法を、基礎から実践まで体系的に解説します。
+**Wiresharkの作者Gerald Combs氏とSysdig/Falco創設者Loris Degioanni氏が協働**して開発した次世代のパケット/イベント解析ツールStratoSharkを学ぶ本です。eBPFを活用したクラウドネイティブ時代のネットワーク解析手法を、基礎から実践まで体系的に解説します。
 
 ### 対象読者
 
@@ -13,6 +13,17 @@ Wiresharkの作者が開発した次世代のパケット/イベント解析ツ�
 - セキュリティエンジニア
 - Kubernetes管理者
 - パフォーマンスチューニング担当者
+
+### 関連書籍
+
+本書の姉妹本として、同じ著者による以下の書籍もあります：
+- [**Falco実践シリーズ - Kubernetesランタイムセキュリティの実装ガイド**](https://zenn.dev/books/falco-practice-series)
+
+**使い分け**:
+- **Falco**: システムコール監視によるランタイムセキュリティ
+- **StratoShark**: ネットワークパケット解析とトラブルシューティング
+
+両方を組み合わせることで、Kubernetesの包括的なセキュリティ・可観測性を実現できます。
 
 ## 📚 目次
 
@@ -24,7 +35,7 @@ Wiresharkの作者が開発した次世代のパケット/イベント解析ツ�
 6. GUI視点での解析 ― WiresharkライクなUIと新機能
 7. Kubernetes と StratoShark ― Pod単位でのキャプチャ
 8. SRE実務での利用例 ― トラブルシュート事例集
-9. Falco / eBPF セキュリティとの比較と活用
+9. eBPFエコシステム統合 ― Falco、Sysdig、Ciliumとの連携
 10. クラウド時代のネットワーク解析 ― StratoSharkの未来
 
 ## 🚀 開発環境

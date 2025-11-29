@@ -13,5 +13,5 @@ chapters:
   - chapter06-gui-analysis
   - chapter07-kubernetes-integration
   - chapter08-sre-use-cases
-  - chapter09-comparison-with-falco
+  - chapter09-ebpf-ecosystem-integration
   - chapter10-future-of-network-analysis
