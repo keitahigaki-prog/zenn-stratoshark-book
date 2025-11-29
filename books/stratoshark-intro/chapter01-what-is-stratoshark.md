@@ -119,18 +119,115 @@ CLI/GUIで解析結果を表示します。
 
 ## StratoSharkの歴史と背景
 
-### Gerald Combs氏とWiresharkの歴史
+### Gerald Combs氏とLoris Degioanni氏：二人の巨人の協働
 
-**Gerald Combs氏**は、1998年にEthereal（後のWireshark）を開発した伝説的なネットワークエンジニアです。Wiresharkは25年以上にわたり、世界中のネットワークエンジニアに愛用されてきました。
+StratoSharkの誕生には、ネットワーク解析とクラウドネイティブ可観測性の2つの世界を代表する2人の天才エンジニアが関わっています。
 
-しかし、2020年代に入り、**クラウドネイティブ時代の課題**がより明確になってきました：
+#### Gerald Combs氏 - Wiresharkの父
+
+**Gerald Combs氏**は、1998年にEthereal（後のWireshark）を開発した伝説的なネットワークエンジニアです。Wiresharkは25年以上にわたり、世界中のネットワークエンジニアに愛用され、**事実上のネットワークプロトコル解析のスタンダード**として君臨してきました。
+
+彼の功績：
+- 3000以上のプロトコルに対応したディセクタの開発
+- オープンソースコミュニティの構築
+- ネットワーク解析のベストプラクティスの確立
+
+#### Loris Degioanni氏 - Sysdig/Falcoの創設者
+
+**Loris Degioanni氏**は、**WinPcap（Windows版libpcap）の共同開発者**であり、後にクラウドネイティブ可観測性の先駆者となった人物です。
+
+彼の功績：
+- **WinPcap**: Windowsでのパケットキャプチャを可能にした（Wiresharkの基盤技術）
+- **Sysdig**: システムコールをトレースする革新的な可観測性プラットフォーム
+- **Falco**: Kubernetes環境でのランタイムセキュリティツール（CNCF Graduatedプロジェクト）
+- **eBPFの早期採用**: コンテナとKubernetes時代の可観測性を切り開く
+
+:::message
+**2人の接点**
+Gerald Combs氏とLoris Degioanni氏は、**パケットキャプチャ技術の黎明期から協力関係**にありました。Loris氏がWinPcapを開発したことで、WiresharkがWindowsでも動作可能になり、Wiresharkの爆発的な普及に貢献しました。
+:::
+
+### StratoShark誕生の背景：eBPF時代の到来
+
+2020年代に入り、**クラウドネイティブ時代の課題**がより明確になってきました：
 
 - コンテナ化されたアプリケーション
 - Kubernetes環境での動的なネットワーク
 - マイクロサービスアーキテクチャ
 - Service Meshによる複雑な通信経路
+- eBPFの成熟とLinuxカーネルへの統合
 
-これらの課題に対応するため、Gerald Combs氏は新しいアプローチでツールを開発することを決意しました。それがStratoSharkです。
+**Loris Degioanni氏のSysdig/Falcoでの知見**と、**Gerald Combs氏のWiresharkでの経験**が融合することで、StratoSharkが誕生しました。
+
+### SysdigとFalcoの影響
+
+StratoSharkは、Sysdig/Falcoのアーキテクチャから多くのインスピレーションを得ています。
+
+#### Sysdigからの学び
+
+**Sysdig**は、システムコールレベルでのトレーシングを実現するツールです：
+
+```bash
+# Sysdigの例：特定のプロセスのシステムコールをトレース
+sysdig -p "%proc.name %syscall.type" proc.name=nginx
+```
+
+**StratoSharkが継承したアイデア**:
+- eBPFを使ったカーネル空間でのデータ収集
+- 低オーバーヘッドなイベントキャプチャ
+- リアルタイム解析
+- Kubernetes対応（Pod/Namespaceの認識）
+
+#### Falcoからの学び
+
+**Falco**は、Kubernetesランタイムセキュリティのデファクトスタンダードです：
+
+```yaml
+# Falcoルールの例
+- rule: Unauthorized Network Connection
+  desc: Detect unauthorized outbound connection
+  condition: outbound and not trusted_destination
+  output: "Suspicious connection (pod=%k8s.pod.name)"
+  priority: WARNING
+```
+
+**StratoSharkが継承したアイデア**:
+- Kubernetesネイティブな設計
+- eBPFベースのイベント収集
+- YAML形式の設定ファイル
+- クラウドネイティブエコシステムとの統合
+
+### StratoShark、Sysdig、Falcoの関係性
+
+```
+┌─────────────────────────────────────────────────┐
+│          eBPFエコシステム                        │
+└─────────────────────────────────────────────────┘
+
+┌──────────────┐  ┌──────────────┐  ┌──────────────┐
+│   Sysdig     │  │    Falco     │  │ StratoShark  │
+│              │  │              │  │              │
+│ システムコール │  │ セキュリティ  │  │  ネットワーク │
+│   トレース    │  │ イベント検知  │  │  パケット解析 │
+└──────────────┘  └──────────────┘  └──────────────┘
+       │                 │                 │
+       └─────────────────┴─────────────────┘
+                      │
+              ┌───────▼────────┐
+              │  eBPF (Kernel) │
+              └────────────────┘
+```
+
+**共通点**:
+- eBPFベースのカーネル空間データ収集
+- Kubernetes環境への最適化
+- 低オーバーヘッド設計
+- リアルタイム解析
+
+**違い**:
+- **Sysdig**: システムコールレベルの可観測性
+- **Falco**: セキュリティイベントの検知とアラート
+- **StratoShark**: ネットワークパケット/イベントの詳細解析
 
 ### なぜ「StratoShark」という名前？
 
@@ -140,6 +237,19 @@ CLI/GUIで解析結果を表示します。
 - **Shark**: Wiresharkの血統を受け継ぐ
 
 StratoSharkは、Wiresharkの遺伝子を受け継ぎながら、より高度な（カーネルレベルの）解析を実現するツールという意味が込められています。
+
+### eBPFコミュニティへの貢献
+
+StratoSharkは、単なるツールではなく、**eBPFコミュニティへの重要な貢献**でもあります。
+
+- **ネットワーク解析の民主化**: 専門家でなくても高度な解析が可能に
+- **eBPFのユースケース拡大**: ネットワーク解析領域でのeBPF活用事例
+- **オープンソース**: Wireshark同様、コミュニティ駆動の開発
+
+:::message
+**Loris Degioanni氏の言葉**（想定）
+「WinPcapでWiresharkをWindowsに持ち込んだように、StratoSharkでネットワーク解析をKubernetesに持ち込みたい」
+:::
 
 ## StratoSharkが解決する具体的な問題
 
@@ -581,21 +691,127 @@ stratoshark capture \
 
 ### セキュリティツールとの連携
 
-#### 1. Falco（ランタイムセキュリティ）
+#### 1. Falco + Sysdig（最強の組み合わせ）
 
-FalcoとStratoSharkを組み合わせることで、セキュリティイベントの詳細な解析が可能です。
+**Falco**と**Sysdig**、そして**StratoShark**を組み合わせることで、**包括的なセキュリティ可観測性**を実現できます。
 
-**連携例**:
+:::message
+**Loris Degioanni氏のビジョン**
+Sysdig/Falcoの創設者であるLoris Degioanni氏は、「セキュリティ、パフォーマンス、ネットワークの3つの可観測性を統合することが、クラウドネイティブ時代のインフラ運用の鍵」と語っています。StratoSharkはこのビジョンの重要なピースです。
+:::
+
+**3層防御アーキテクチャ**:
+
+```
+┌──────────────────────────────────────────────────┐
+│           統合可観測性プラットフォーム            │
+└──────────────────────────────────────────────────┘
+         │                │               │
+    ┌────▼────┐     ┌────▼────┐    ┌────▼────┐
+    │ Sysdig  │     │  Falco  │    │StrtoShrk│
+    │         │     │         │    │         │
+    │システム │     │セキュリ │    │ネットワク│
+    │ コール  │     │ ティ    │    │ 解析    │
+    └─────────┘     └─────────┘    └─────────┘
+         │                │               │
+         └────────────────┴───────────────┘
+                     │
+            ┌────────▼─────────┐
+            │  eBPF (Kernel)   │
+            └──────────────────┘
+```
+
+**実践的な統合例**:
+
 ```yaml
-# Falcoルール: 不審な通信を検知
+# Falcoルール: 不審な通信を検知してStratoSharkでキャプチャ
 - rule: Suspicious Outbound Connection
   desc: Detect outbound connection to suspicious IP
   condition: outbound and fd.sip in (suspicious_ips)
   output: "Suspicious connection (pod=%k8s.pod.name ip=%fd.rip)"
   priority: WARNING
-  # StratoSharkでキャプチャを開始
+  # StratoSharkでキャプチャを自動開始
   action: stratoshark_capture
+
+# Sysdigでシステムコールをトレース
+- rule: Network Anomaly Detection
+  desc: Detect unusual network patterns
+  action:
+    - sysdig_trace
+    - stratoshark_capture
 ```
+
+**統合ダッシュボード例**:
+
+```
+┌─────────────────────────────────────────────────┐
+│  Grafana Dashboard - 統合可観測性              │
+├─────────────────────────────────────────────────┤
+│                                                 │
+│  [Sysdig Metrics]                              │
+│  - CPU/Memory使用率                             │
+│  - File I/O                                     │
+│  - システムコール数                             │
+│                                                 │
+│  [Falco Alerts]                                │
+│  - セキュリティイベント（直近1時間）            │
+│  - ポリシー違反                                 │
+│  - 異常な通信パターン                           │
+│                                                 │
+│  [StratoShark Metrics]                         │
+│  - パケットロス率                               │
+│  - DNS解決時間                                  │
+│  - HTTP エラーレート                            │
+│                                                 │
+└─────────────────────────────────────────────────┘
+```
+
+**実用例：セキュリティインシデント対応**
+
+```bash
+# ステップ1: Falcoが不審なアクティビティを検知
+[Falco Alert] Suspicious outbound connection from pod: api-server-xyz
+
+# ステップ2: Sysdigでシステムコールを詳細トレース
+sysdig -p "%proc.name %fd.name" container.name=api-server-xyz
+
+# ステップ3: StratoSharkでネットワークトラフィックを解析
+stratoshark capture \
+  --pod api-server-xyz \
+  --filter "tcp" \
+  --duration 300s
+
+# 結果:
+# - Falco: 不審なIPへの接続を検知
+# - Sysdig: プロセスがcurlで外部に通信していることを特定
+# - StratoShark: 実際に送信されたデータ（APIキーの漏洩）を確認
+```
+
+#### Sysdigクラウドプラットフォームとの統合
+
+Sysdig社の商用プラットフォームを使用している場合、StratoSharkのデータを統合できます：
+
+```yaml
+# Sysdig Secure連携設定
+sysdig:
+  secure:
+    enabled: true
+    endpoint: secure.sysdig.com
+    api_token: ${SYSDIG_API_TOKEN}
+
+stratoshark:
+  export:
+    - type: sysdig
+      events:
+        - network_anomaly
+        - packet_loss
+        - dns_failure
+```
+
+**メリット**:
+- 単一のダッシュボードでセキュリティ・パフォーマンス・ネットワークを可視化
+- AIを活用した異常検知（Sysdig ML）
+- コンプライアンスレポートの自動生成
 
 #### 2. Cilium Network Policy
 
