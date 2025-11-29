@@ -1,0 +1,17 @@
+title: "StratoShark入門 — eBPF時代のWireshark"
+summary: "Wiresharkの作者が開発した次世代のパケット/イベント解析ツールStratoSharkを学ぶ本です。eBPFを活用したクラウドネイティブ時代のネットワーク解析手法を、基礎から実践まで体系的に解説します。"
+topics: ["stratoshark", "wireshark", "ebpf", "kubernetes", "network", "sre", "observability", "linux", "cloudnative", "troubleshooting"]
+published: false
+price: 0 # 有料の場合200〜5000
+# 本に含めるチャプターを順番に並べましょう
+chapters:
+  - chapter01-what-is-stratoshark
+  - chapter02-difference-from-wireshark
+  - chapter03-internal-architecture
+  - chapter04-installation-setup
+  - chapter05-cli-capture-basics
+  - chapter06-gui-analysis
+  - chapter07-kubernetes-integration
+  - chapter08-sre-use-cases
+  - chapter09-comparison-with-falco
+  - chapter10-future-of-network-analysis
