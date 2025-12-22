@@ -1,0 +1,25 @@
+{
+  "name": "zenn-stratoshark-book",
+  "version": "1.0.0",
+  "description": "このリポジトリは、Zenn Bookの「StratoShark入門 — eBPF時代のWireshark」の原稿を管理しています。",
+  "main": "index.js",
+  "scripts": {
+    "preview": "zenn preview",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/keitahigaki-prog/zenn-stratoshark-book.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/keitahigaki-prog/zenn-stratoshark-book/issues"
+  },
+  "homepage": "https://github.com/keitahigaki-prog/zenn-stratoshark-book#readme",
+  "dependencies": {
+    "zenn-cli": "^0.2.11"
+  }
+}
